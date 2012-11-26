@@ -30,7 +30,7 @@
 
 ::Start off clean :)
 @echo off
-SETLOCAL rem This command keeps variables local, put directly after @echo off.
+SETLOCAL rem This command keeps variables local, put it directly after @echo off.
 set script-new-md5=NULL
 set script-md5=NULL
 
@@ -70,4 +70,4 @@ del support_files\Script-server-MD5.txt
 :PROGRAM
 :: --- Program goes here ---
 
-ENDLOCAL rem This command keeps variables local, put at end of program.
+ENDLOCAL rem This command keeps variables local, put it at end of program.
