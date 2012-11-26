@@ -16,30 +16,58 @@
 ::   -Make sure the MD5 text file on the server is in the same format that md5sums.exe outputs (HASH  script.bat) (TWO SPACES!)
 ::   -You must substitute your script's name for script.bat.
 ::   -You must substitute the appropriate URL for <URL>. Remove the <> also.
-
-:: TO SUCCESSFULLY UPDATE THE PROGRAM:
-::   -Edit the MD5sum file on the server and change the hash to the appropriate one. Edit ONLY the hash.
-::   -If you're keeping the old versions on the server, upload the new version and edit the New-ver-DL.txt on the server to reflect the new download location.
-::   -If you're not, just delete the old script and upload the new one (keep the same name!!)
 ::
+:: TO SUCCESSFULLY UPDATE THE PROGRAM:
+::   1- Edit the MD5sum file on the server and change the hash to the appropriate one. Edit ONLY the hash.
+::   2- Update the script on the server.
+::
+:: NOTES:
+::   -This is a system of MD5sums. This means that if the user edits the program manually, their edits will be overwritten.
+::   -Make sure when you are coding updates, uncomment line 38. In simple English, if line 38 is not commented, the program 
+::    will not check for updates, thus allowing you to code new ones. MAKE SURE YOU RE-COMMENT THE LINE BEFORE YOU PUT THE 
+::    NEW SCRIPT ON THE SERVER AND CALCULATE THE MD5! (I know from experience :P)
+::
+
+::Start off clean :)
 @echo off
+SETLOCAL rem This command keeps variables local, put directly after @echo off.
+set script-new-md5=NULL
+set script-md5=NULL
+
+::Read notes section above for an explanation of the line below.
+::GOTO PROGRAM REM ADD :: TO BEGINNING OF THIS LINE FOR RELEASE VERSIONS!
+
+::Let the user know we auto-update
 echo Checking for updates...
-::In case of freshly updated script...
+
+::In case of freshly updated script
 IF EXIST support_files\Script-MD5.txt (del support_files\Script-MD5.txt)
 IF EXIST OTA.bat (MOVE OTA.bat support_files\OTA.bat) >NUL
 IF EXIST support_files\Script-server-MD5.txt (del support_files\Script-server-MD5.txt)
-::Building MD5 of current script
-support_files\md5sums script.bat >support_files\Script-MD5.txt
+
 :: Downloading latest MD5 Definitions
 support_files\wget --quiet -O support_files\Script-server-MD5.txt <URL>
-::Checking to see if there's a new version...
-fc /b support_files\Script-MD5.txt support_files\Script-server-MD5.txt >NUL
-if errorlevel 1 (Goto OTA) ELSE (GOTO PROGRAM)
-:OTA
-MOVE support_files\OTA.bat OTA.bat >NUL
-start OTA.bat
-exit
-:PROGRAM
-del support_files\Script-MD5.txt
+
+::Building MD5 of current script
+FOR /F "tokens=1 delims=" %%a in ( 'support_files\md5sums script.bat' ) do ( set script-md5=%%a )
+
+::Setting the Server MD5 as %script-new-MD5%
+set /p script-new-md5=<support_files\Script-server-MD5.txt >>%log%
+
+::If the MD5's aren't equal (there is an update), let's update. If not, continue on.
+IF "%script-new-md5% " NEQ "%script-md5%" (
+MOVE support_files\OTA.bat OTA.bat >>%log% 2>&1
+OTA.bat
+)
+
+::No updates are availible, so we start the program now.
+echo.
+echo No updates availible
+
+::Remove the MD5 file
 del support_files\Script-server-MD5.txt
-::Your program here...
+
+:PROGRAM
+:: --- Program goes here ---
+
+ENDLOCAL rem This command keeps variables local, put at end of program.
